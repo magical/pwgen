@@ -1,18 +1,20 @@
 package main
 
 import (
+	"bytes"
 	"expvar"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"text/scanner"
 	"unicode"
 )
 
 const numWords = 12
 
-var words []string
+var dict []string
 
 // Number of bits of entropy generated since the start of the program
 var entropy expvar.Int
@@ -22,23 +24,41 @@ var entropy expvar.Int
 // https://www.eff.org/files/2016/09/08/eff_short_wordlist_2_0.txt
 
 func main() {
-	words, err := loadwords("eff_large_wordlist.txt")
+	var err error
+	dict, err = loadwords("eff_short_wordlist_1.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
 	expvar.Publish("entropy", &entropy)
-	http.HandleFunc("/password", func(w http.ResponseWriter, req *http.Request) {
-		seen := make(map[int]bool, numWords)
-		for i := 0; i < numWords; i++ {
-			n := rand.Intn(len(words))
-			for seen[n] {
-				n = rand.Intn(len(words))
-			}
-			seen[n] = true
-			fmt.Fprintf(w, "%s\n", words[n])
-		}
-	})
+	http.HandleFunc("/password", handleGen)
+	http.HandleFunc("/password/list/", handleList)
 	log.Fatal(http.ListenAndServe(":8081", nil))
+}
+
+// handleGen generates passwords
+func handleGen(w http.ResponseWriter, req *http.Request) {
+	seen := make(map[int]bool, numWords)
+	words := make([]string, numWords)
+	for i := range words {
+		n := rand.Intn(len(dict))
+		for seen[n] {
+			n = rand.Intn(len(words))
+		}
+		seen[n] = true
+		words[i] = dict[n]
+	}
+	var out bytes.Buffer
+	tmpl.Execute(&out, &tmplContext{Words: words})
+	out.WriteTo(w)
+}
+
+// handleList prints a word list to stdout
+func handleList(w http.ResponseWriter, req *http.Request) {
+	name := path.Base(req.URL.Path)
+	_ = name
+	for _, word := range dict {
+		fmt.Fprintln(w, word)
+	}
 }
 
 func loadwords(filename string) ([]string, error) {
