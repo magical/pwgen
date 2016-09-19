@@ -9,7 +9,7 @@ type tmplContext struct {
 var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
 <meta charset="utf-8">
 <title>Password Generator</title>
-<meta name="viewport" value="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   header { text-align: center; }
   body { max-width: 500px; margin: auto; }
