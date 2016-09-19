@@ -14,13 +14,17 @@ var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
   header { text-align: center; }
   body { max-width: 500px; margin: auto; }
   .passwords { font: 20px sans-serif; text-align: center; }
-  .passwords { max-width: 80%; margin: auto; }
+  .passwords { max-width: 80%; margin: auto; position: relative; }
 
-  .passwords span { display: inline-block; min-width: fit-content; width: 26.4%; padding: .5em 0; }
+  .passwords span { display: inline-block; width: 26.4%; padding: .5em 0; }
+  .passwords span.large { width: 40%; }
+
+  footer { font-size: small; color: #808080; max-width: 80%; margin: 4em auto 0; }
 
   @media screen and (min-width: 500px) {
     body { max-width: 800; }
     .passwords span { width: 20%; }
+    .passwords span.large { width: 26.4%; }
   }
 </style>
 
@@ -29,11 +33,26 @@ var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
   <p><i>Need a password? Here, have a dozen.</i>
 </header>
 
-<div class="passwords">
-  {{ range .Words }}
-     <span>{{ . }}</span>
-  {{ end }}
-</div>
+<main>
+  <div class="passwords">
+    {{ range $i, $_ := .Words }}
+      {{ if lt $i 12 }}
+        <span>{{ . }}</span>
+      {{ else }}
+        <span class="large">{{ . }}</span>
+      {{ end }}
+    {{ end }}
+  </div>
+</main>
+
+<footer>
+  <p>
+    Maintained by Andrew Ekstedt.
+    Written in Go.
+    Randomness courtesy of the <a href="https://golang.org/pkg/crypto/rand/">crypto/rand</a> package.
+    Word lists by the <a href="https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases">EFF</a>.
+  </p>
+</footer>
 `))
 
 var _ = template.Must(tmpl.New("list").Parse(`<!doctype html>
