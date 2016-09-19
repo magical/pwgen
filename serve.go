@@ -12,9 +12,16 @@ import (
 	"unicode"
 )
 
-const numWords = 12
+const (
+	numShortWords = 12
+	numLargeWords = 3
+	numWords      = numShortWords + numLargeWords
+)
 
-var dict []string
+var (
+	dictShort []string
+	dictLarge []string
+)
 
 // Number of bits of entropy generated since the start of the program
 var entropy expvar.Int
@@ -25,7 +32,11 @@ var entropy expvar.Int
 
 func main() {
 	var err error
-	dict, err = loadwords("eff_short_wordlist_1.txt")
+	dictShort, err = loadwords("eff_short_wordlist_1.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	dictLarge, err = loadwords("eff_large_wordlist.txt")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -38,24 +49,46 @@ func main() {
 // handleGen generates passwords
 func handleGen(w http.ResponseWriter, req *http.Request) {
 	seen := make(map[int]bool, numWords)
-	words := make([]string, numWords)
-	for i := range words {
-		n := rand.Intn(len(dict))
+	words := make([]string, 0, numWords)
+	for len(words) < numShortWords {
+		n := rand.Intn(len(dictShort))
 		for seen[n] {
 			n = rand.Intn(len(words))
 		}
 		seen[n] = true
-		words[i] = dict[n]
+		words = append(words, dictShort[n])
+	}
+	for i := 0; i < numLargeWords; i++ {
+		n := rand.Intn(len(dictLarge))
+		for seen[n] {
+			n = rand.Intn(len(words))
+		}
+		seen[n] = true
+		words = append(words, dictLarge[n])
 	}
 	var out bytes.Buffer
-	tmpl.Execute(&out, &tmplContext{Words: words})
+	err := tmpl.Execute(&out, &tmplContext{Words: words})
+	if err != nil {
+		log.Print(err)
+		http.Error(w, "internal server error", 500)
+		return
+	}
 	out.WriteTo(w)
 }
 
 // handleList prints a word list to stdout
 func handleList(w http.ResponseWriter, req *http.Request) {
 	name := path.Base(req.URL.Path)
-	_ = name
+	var dict []string
+	switch name {
+	case "short":
+		dict = dictShort
+	case "large":
+		dict = dictLarge
+	default:
+		http.NotFound(w, req)
+		return
+	}
 	for i, word := range dict {
 		fmt.Fprintln(w, i, word)
 	}
