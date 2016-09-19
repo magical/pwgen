@@ -82,6 +82,7 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "internal server error", 500)
 		return
 	}
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	out.WriteTo(w)
 }
 
