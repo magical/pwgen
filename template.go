@@ -37,7 +37,7 @@ var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
   <div class="passwords">
     {{ range $i, $_ := .Words }}
       {{ if lt $i 12 }}
-        <span>{{ . }}</span>
+        <span class="short">{{ . }}</span>
       {{ else }}
         <span class="large">{{ . }}</span>
       {{ end }}

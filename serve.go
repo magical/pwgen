@@ -7,10 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path"
-	"text/scanner"
-	"unicode"
 )
 
 const (
@@ -19,10 +16,7 @@ const (
 	numWords      = numShortWords + numLargeWords
 )
 
-var (
-	dictShort []string
-	dictLarge []string
-)
+//go:generate go run gendict.go -o dict.go
 
 // Number of bits of entropy generated since the start of the program
 var entropy expvar.Int
@@ -33,16 +27,6 @@ var entropy expvar.Int
 
 func main() {
 	flag.Parse()
-
-	var err error
-	dictShort, err = loadwords("eff_short_wordlist_1.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
-	dictLarge, err = loadwords("eff_large_wordlist.txt")
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	l, err := listen()
 	if err != nil {
@@ -102,40 +86,4 @@ func handleList(w http.ResponseWriter, req *http.Request) {
 	for i, word := range dict {
 		fmt.Fprintln(w, i, word)
 	}
-}
-
-func loadwords(filename string) ([]string, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	var words []string
-	var s scanner.Scanner
-	s.Init(f)
-	s.Whitespace = 1<<'\t' | 1<<'\r' | 1<<' '
-	s.Mode = scanner.ScanIdents | scanner.ScanInts | scanner.SkipComments
-	s.Position.Filename = filename
-	s.IsIdentRune = func(r rune, i int) bool {
-		return unicode.IsLetter(r) || r == '-'
-	}
-	for {
-		tok := s.Scan()
-		if tok == scanner.EOF {
-			break
-		}
-		if tok == '\n' {
-			continue
-		}
-		if tok != scanner.Int {
-			return nil, fmt.Errorf("%s: expected int", s.Pos())
-		}
-		if tok := s.Scan(); tok != scanner.Ident {
-			return nil, fmt.Errorf("%s: expected word, found %v", s.Pos(), scanner.TokenString(tok))
-		}
-		words = append(words, s.TokenText())
-		if tok := s.Scan(); tok != '\n' {
-			return nil, fmt.Errorf("%s: expected newline, found %v", s.Pos(), scanner.TokenString(tok))
-		}
-	}
-	return words, nil
 }
