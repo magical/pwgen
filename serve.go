@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"expvar"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -31,6 +32,9 @@ var entropy expvar.Int
 // https://www.eff.org/files/2016/09/08/eff_short_wordlist_2_0.txt
 
 func main() {
+	bind := flag.String("bind", ":8080", "address to listen on")
+	flag.Parse()
+
 	var err error
 	dictShort, err = loadwords("eff_short_wordlist_1.txt")
 	if err != nil {
@@ -40,10 +44,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	expvar.Publish("entropy", &entropy)
 	http.HandleFunc("/password", handleGen)
 	http.HandleFunc("/password/list/", handleList)
-	log.Fatal(http.ListenAndServe(":8081", nil))
+	log.Fatal(http.ListenAndServe(*bind, nil))
 }
 
 // handleGen generates passwords
