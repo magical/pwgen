@@ -32,7 +32,6 @@ var entropy expvar.Int
 // https://www.eff.org/files/2016/09/08/eff_short_wordlist_2_0.txt
 
 func main() {
-	bind := flag.String("bind", ":8080", "address to listen on")
 	flag.Parse()
 
 	var err error
@@ -45,10 +44,15 @@ func main() {
 		log.Fatal(err)
 	}
 
+	l, err := listen()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	expvar.Publish("entropy", &entropy)
 	http.HandleFunc("/password", handleGen)
 	http.HandleFunc("/password/list/", handleList)
-	log.Fatal(http.ListenAndServe(*bind, nil))
+	log.Fatal(http.Serve(l, nil))
 }
 
 // handleGen generates passwords
