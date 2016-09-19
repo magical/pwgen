@@ -56,8 +56,8 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 func handleList(w http.ResponseWriter, req *http.Request) {
 	name := path.Base(req.URL.Path)
 	_ = name
-	for _, word := range dict {
-		fmt.Fprintln(w, word)
+	for i, word := range dict {
+		fmt.Fprintln(w, i, word)
 	}
 }
 
