@@ -51,6 +51,9 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 		seen[n] = true
 		words = append(words, dictShort[n])
 	}
+	for n := range seen {
+		delete(seen, n)
+	}
 	for i := 0; i < numLargeWords; i++ {
 		n := rand.Intn(len(dictLarge))
 		for seen[n] {
