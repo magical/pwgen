@@ -49,7 +49,7 @@ var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
   <p>
     Maintained by Andrew Ekstedt.
     Written in Go.
-    Randomness courtesy of the <a href="https://golang.org/pkg/crypto/rand/">crypto/rand</a> package.
+    Randomness harvested from <code>/dev/urandom</code>, via the <a href="https://golang.org/pkg/crypto/rand/">crypto/rand</a> package.
     Word lists by the <a href="https://www.eff.org/deeplinks/2016/07/new-wordlists-random-passphrases">EFF</a>.
   </p>
 </footer>
