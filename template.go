@@ -22,7 +22,7 @@ var tmpl = template.Must(template.New("password").Parse(`<!doctype html>
   .passwords span.large { width: 40%; }
 
   .digits { margin-top: .5em; }
-  .digits span { display: inline-block; padding: .5em .5em; }
+  .digits span { display: inline-block; padding: .5em 0; width: 1em; }
 
   footer { font-size: small; color: #808080; max-width: 80%; margin: 4em auto 0; }
 
