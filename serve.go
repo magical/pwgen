@@ -40,6 +40,18 @@ func main() {
 	log.Fatal(http.Serve(l, nil))
 }
 
+func clearInts(s []int) {
+	for i := range s {
+		s[i] = 0
+	}
+}
+
+func clearStrings(s []string) {
+	for i := range s {
+		s[i] = ""
+	}
+}
+
 // handleGen generates passwords
 func handleGen(w http.ResponseWriter, req *http.Request) {
 	rand := newRand()
@@ -58,12 +70,15 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 		seen = insertSorted(seen, n)
 		words = append(words, dictLarge[n])
 	}
+	defer clearStrings(words[:])
+	clearInts(seen[:cap(seen)])
 	v := rand.Intn(1e6)
 	digits := make([]int, 6)
 	for i := range digits {
 		digits[i] = v % 10
 		v /= 10
 	}
+	defer clearInts(digits[:])
 	var out bytes.Buffer
 	err := tmpl.Execute(&out, &tmplContext{Words: words, Digits: digits})
 	if err != nil {
