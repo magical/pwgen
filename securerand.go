@@ -5,4 +5,6 @@ import (
 	mathrand "math/rand"
 )
 
-var rand = mathrand.New(&ReaderSource{Reader: cryptorand.Reader})
+func newRand() *mathrand.Rand {
+	return mathrand.New(&ReaderSource{Reader: cryptorand.Reader})
+}

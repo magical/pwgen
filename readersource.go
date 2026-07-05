@@ -2,6 +2,7 @@ package main
 
 import "io"
 
+// Not safe for concurrent use
 type ReaderSource struct {
 	io.Reader
 	buf [8]byte

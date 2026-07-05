@@ -43,6 +43,7 @@ func main() {
 
 // handleGen generates passwords
 func handleGen(w http.ResponseWriter, req *http.Request) {
+	rand := newRand()
 	seen := make([]int, 0, numWords)
 	words := make([]string, 0, numWords)
 	for len(words) < numShortWords {
