@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	cryptorand "crypto/rand"
 	"expvar"
 	"flag"
 	"fmt"
@@ -62,8 +63,15 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 		seen[n] = true
 		words = append(words, dictLarge[n])
 	}
+	key := randomKey()
+	v := hotp(key, 0, 6)
+	digits := make([]int, 6)
+	for i := range digits {
+		digits[i] = v % 10
+		v /= 10
+	}
 	var out bytes.Buffer
-	err := tmpl.Execute(&out, &tmplContext{Words: words})
+	err := tmpl.Execute(&out, &tmplContext{Words: words, Digits: digits})
 	if err != nil {
 		log.Print(err)
 		http.Error(w, "internal server error", 500)
@@ -71,6 +79,14 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 	out.WriteTo(w)
+}
+
+func randomKey() []byte {
+	key := make([]byte, 32)
+	if _, err := cryptorand.Read(key); err != nil {
+		panic(err)
+	}
+	return key
 }
 
 // handleList prints a word list to stdout
