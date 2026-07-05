@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	cryptorand "crypto/rand"
+	"crypto/subtle"
 	"expvar"
 	"flag"
 	"fmt"
@@ -42,25 +43,19 @@ func main() {
 
 // handleGen generates passwords
 func handleGen(w http.ResponseWriter, req *http.Request) {
-	seen := make(map[int]bool, numWords)
+	seen := make([]int, 0, numWords)
 	words := make([]string, 0, numWords)
 	for len(words) < numShortWords {
-		n := rand.Intn(len(dictShort))
-		for seen[n] {
-			n = rand.Intn(len(words))
-		}
-		seen[n] = true
+		n := rand.Intn(len(dictShort) - len(seen))
+		n = indexWithoutReplacement(n, seen)
+		seen = insertSorted(seen, n)
 		words = append(words, dictShort[n])
 	}
-	for n := range seen {
-		delete(seen, n)
-	}
+	seen = seen[:0]
 	for i := 0; i < numLargeWords; i++ {
-		n := rand.Intn(len(dictLarge))
-		for seen[n] {
-			n = rand.Intn(len(words))
-		}
-		seen[n] = true
+		n := rand.Intn(len(dictLarge) - len(seen))
+		n = indexWithoutReplacement(n, seen)
+		seen = insertSorted(seen, n)
 		words = append(words, dictLarge[n])
 	}
 	key := randomKey()
@@ -105,4 +100,36 @@ func handleList(w http.ResponseWriter, req *http.Request) {
 	for i, word := range dict {
 		fmt.Fprintln(w, i, word)
 	}
+}
+
+// returns the minimum and maximum of two values.
+// the time taken by this function is independent of the values.
+// Its behavior is undefined if a or b are negative or > 2**31 - 1.
+func constantTimeMinMax(a, b int) (min, max int) {
+	// note: prior to Go 1.26, ConstantTimeLessOrEq only operated in the range 0..2^31-1.
+	// starting in Go 1.26, it is defined as boolToInt(a<=b) with compiler magic to make the operation constant time.
+	less := subtle.ConstantTimeLessOrEq(a, b)
+	min = subtle.ConstantTimeSelect(less, a, b)
+	max = a + b - min
+	// or:
+	// mask := subtle.ConstantTimeSelect(less, 0, a^b)
+	// return a^mask, b^mask
+	return min, max
+}
+
+// precondition: list is sorted
+// postcondition: list is sorted
+func insertSorted(list []int, x int) []int {
+	for i := range list {
+		list[i], x = constantTimeMinMax(list[i], x)
+	}
+	return append(list, x)
+}
+
+// precondition: seen is sorted
+func indexWithoutReplacement(idx int, seen []int) int {
+	for _, gap := range seen {
+		idx += subtle.ConstantTimeLessOrEq(gap, idx)
+	}
+	return idx
 }
