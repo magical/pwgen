@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/fcgi"
 	"path"
 )
 
@@ -27,6 +28,7 @@ var entropy expvar.Int
 // https://www.eff.org/files/2016/09/08/eff_short_wordlist_2_0.txt
 
 func main() {
+	fcgiFlag := flag.Bool("fcgi", false, "serve FastCGI instead of HTTP")
 	flag.Parse()
 
 	l, err := listen()
@@ -38,7 +40,11 @@ func main() {
 	http.HandleFunc("/password", handleGen)
 	http.HandleFunc("/password/list/", handleList)
 	http.Handle("/password/vars", expvar.Handler())
-	log.Fatal(http.Serve(l, nil))
+	if *fcgiFlag {
+		log.Fatal(fcgi.Serve(l, nil))
+	} else {
+		log.Fatal(http.Serve(l, nil))
+	}
 }
 
 func clearInts(s []int) {
