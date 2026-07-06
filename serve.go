@@ -57,7 +57,7 @@ func handleGen(w http.ResponseWriter, req *http.Request) {
 	rand := newRand()
 	seen := make([]int, 0, numWords)
 	words := make([]string, 0, numWords)
-	for len(words) < numShortWords {
+	for i := 0; i < numShortWords; i++ {
 		n := rand.Intn(len(dictShort) - len(seen))
 		n = indexWithoutReplacement(n, seen)
 		seen = insertSorted(seen, n)
