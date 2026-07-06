@@ -34,9 +34,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	expvar.Publish("entropy", &entropy)
+	expvar.Publish("entropy_used", &entropy)
 	http.HandleFunc("/password", handleGen)
 	http.HandleFunc("/password/list/", handleList)
+	http.Handle("/password/vars", expvar.Handler())
 	log.Fatal(http.Serve(l, nil))
 }
 
